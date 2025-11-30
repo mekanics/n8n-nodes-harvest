@@ -1,0 +1,12 @@
+{
+  "extends": "typescript-config/node.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": ".",
+    "declaration": true,
+    "declarationMap": true
+  },
+  "include": ["credentials/**/*.ts", "nodes/**/*.ts", "index.ts"],
+  "exclude": ["node_modules", "dist"]
+}
+
