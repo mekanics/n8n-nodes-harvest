@@ -1,0 +1,24 @@
+{
+  "name": "harvest-clients",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo for Harvest API client and n8n integration",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "type-check": "turbo run type-check",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md,yaml}\"",
+    "clean": "turbo run clean && rm -rf node_modules .turbo"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3"
+  }
+}
