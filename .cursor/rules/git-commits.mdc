@@ -1,0 +1,345 @@
+---
+description: Guidelines for writing meaningful, human-like git commit messages that clearly communicate changes and intent
+---
+
+# Writing Git Commits Like a Human
+
+## Philosophy
+
+Write commit messages as if you're explaining your changes to a colleague over coffee. Be clear, concise, and context-aware. Your commits should tell a story about what changed and why, not just what you typed.
+
+## Commit Message Structure
+
+### Subject Line (First Line)
+
+- **Length**: 50-72 characters max
+- **Tone**: Imperative mood ("Add feature" not "Added feature" or "Adds feature")
+- **Capitalization**: Start with capital letter, no period at the end
+- **Focus**: What the commit does, not what you did
+
+```
+✅ Good: Add position trailing to dual investment strategy
+❌ Bad: added some stuff for positions
+❌ Bad: Updated files.
+```
+
+### Body (Optional but Recommended)
+
+- **When to use**: For anything beyond trivial changes
+- **Wrap at**: 72 characters per line
+- **Content**: Explain the **what** and **why**, not the **how**
+- **Format**: Separate from subject with blank line
+
+### Footer (Optional)
+
+- **Breaking changes**: Start with `BREAKING CHANGE:`
+- **Issue references**: `Fixes #123` or `Closes #456`
+
+## Example Commit Structure
+
+```
+Add position trailing feature for investment tracking
+
+Users can now create trails to group related dual investment positions
+and track earnings over time. This makes it easier to analyze strategy
+performance across multiple positions.
+
+The implementation includes:
+- Trail creation and management UI
+- Position detection and suggestion logic
+- Earnings calculation and aggregation
+- Trail statistics dashboard
+
+Fixes #42
+```
+
+## Commit Types & Conventions
+
+### Feature Commits
+
+Start with action verbs that describe what's being added:
+
+- `Add` - New functionality
+- `Implement` - Complete a feature or system
+- `Introduce` - Bring in a new concept or pattern
+
+```
+✅ Add dark mode toggle to settings page
+✅ Implement trail earnings calculation
+✅ Introduce caching layer for API responses
+```
+
+### Fix Commits
+
+Be specific about what was broken:
+
+- `Fix` - Bug fixes
+- `Correct` - Small corrections
+- `Resolve` - Problem solving
+
+```
+✅ Fix infinite loop in position detection
+✅ Correct strike price comparison logic
+✅ Resolve race condition in trail updates
+```
+
+### Improvement Commits
+
+Show enhancement intent:
+
+- `Improve` - Make existing functionality better
+- `Optimize` - Performance improvements
+- `Enhance` - Add to existing features
+- `Refine` - Polish and small improvements
+
+```
+✅ Improve error handling in API client
+✅ Optimize trail detection algorithm
+✅ Enhance position card with hover states
+```
+
+### Refactoring Commits
+
+Clarify the refactoring goal:
+
+- `Refactor` - Restructure without changing behavior
+- `Restructure` - Major organizational changes
+- `Simplify` - Make code simpler
+- `Extract` - Pull out components or logic
+
+```
+✅ Refactor trail service to use TypeScript types
+✅ Extract position validation into shared util
+✅ Simplify dual investment table columns logic
+```
+
+### Documentation & Maintenance
+
+- `Update` - Changes to existing things
+- `Remove` - Delete code or features
+- `Clean` - Code cleanup
+- `Document` - Add or improve docs
+
+```
+✅ Update README with trail feature documentation
+✅ Remove deprecated position status field
+✅ Clean up unused imports in trail components
+✅ Document API authentication flow
+```
+
+## Human-Like Qualities
+
+### 1. Use Natural Language
+
+Write as if explaining to a teammate:
+
+```
+✅ Add loading state to prevent duplicate submissions
+   Rather than: Implement isSubmitting boolean flag
+
+✅ Fix strike price showing wrong decimal places
+   Rather than: Update number formatting logic
+
+✅ Move trail calculations to server for better performance
+   Rather than: Refactor computation location
+```
+
+### 2. Provide Context When Needed
+
+If the change isn't obvious, explain why:
+
+```
+✅ Cache position data to reduce API calls
+
+   The Binance API has rate limits and we were hitting them during
+   peak usage. This caches position data for 30 seconds to stay well
+   under the limit while keeping data reasonably fresh.
+```
+
+### 3. Group Related Changes
+
+One commit = one logical change:
+
+```
+✅ Multiple commits:
+   1. "Add trail deletion confirmation dialog"
+   2. "Add optimistic updates to trail mutations"
+
+❌ Single commit:
+   "Add dialog and fix mutations and update styles"
+```
+
+### 4. Be Honest About Work-in-Progress
+
+It's okay to acknowledge incomplete work:
+
+```
+✅ Add basic trail suggestion algorithm
+
+   This is a first pass that handles the common case of sequential
+   positions with matching strike prices. Future improvements needed:
+   - Handle out-of-sequence positions
+   - Consider partial matches
+   - Add confidence scoring
+```
+
+## What to Commit
+
+### DO Commit:
+
+- ✅ Working features (even if incomplete)
+- ✅ Bug fixes that solve a specific problem
+- ✅ Refactors that improve code quality
+- ✅ Tests (ideally with the feature they test)
+- ✅ Documentation updates
+
+### DON'T Commit:
+
+- ❌ Broken/non-compiling code (except on feature branches with clear notes)
+- ❌ Debug code (console.logs, commented experiments)
+- ❌ Multiple unrelated changes in one commit
+- ❌ Massive files without explanation
+- ❌ Credentials or secrets
+
+## Commit Frequency
+
+### Commit Often, Push Wisely
+
+- **Local commits**: As often as you have a logical unit of work done
+- **Push to remote**: When feature/fix is complete and tested
+- **Main/master**: Only production-ready code
+
+### Good Commit Cadence
+
+```
+Feature branch:
+├─ Add trail schema and database migration
+├─ Create trail API endpoints
+├─ Implement trail creation UI
+├─ Add position linking functionality
+├─ Fix TypeScript errors in trail components
+└─ Add trail feature tests
+```
+
+## Real-World Examples
+
+### Example 1: Feature Addition
+
+```
+Add trail suggestions based on position patterns
+
+Analyzes existing positions to suggest which ones should be grouped
+into trails. Uses matching criteria like same currency pair, sequential
+settlement dates, and similar strike prices.
+
+The suggestion engine:
+- Identifies potential position sequences
+- Scores matches by confidence level
+- Filters out already-tracked positions
+- Returns top 10 suggestions per trail
+
+This helps users discover related positions they might have missed.
+```
+
+### Example 2: Bug Fix
+
+```
+Fix earnings calculation for overlapping positions
+
+Positions with overlapping settlement dates were being counted twice
+in the total earnings calculation. Now we deduplicate positions by ID
+before summing the APR.
+
+Also added test cases to prevent regression.
+
+Fixes #87
+```
+
+### Example 3: Refactor
+
+```
+Refactor trail detection into separate service
+
+Moved the position matching logic out of the API route and into
+a dedicated service. This makes it easier to:
+- Test the algorithm independently
+- Reuse logic across different endpoints
+- Mock for component testing
+
+No functional changes, just better organization.
+```
+
+### Example 4: Small Fix
+
+```
+Fix tooltip positioning on position cards
+
+Tooltips were getting cut off at viewport edges. Switched to auto
+positioning which handles boundaries properly.
+```
+
+## Tips for Better Commits
+
+1. **Read your diff before committing**: Does it make sense as one unit?
+2. **Imagine reviewing this later**: Will you understand what you were thinking?
+3. **Think about the changelog**: Would this make sense in release notes?
+4. **Use the body liberally**: The subject is just a headline
+5. **Reference issues**: Connect commits to the bigger picture
+6. **Be consistent**: Follow your team's existing patterns
+7. **Rewrite history carefully**: Use interactive rebase on private branches only
+
+## Common Patterns by File Type
+
+### Component Changes
+
+```
+Add hover states to TrailCard component
+Update AddPositionDialog with validation feedback
+Fix responsive layout in PositionsTable
+```
+
+### API/Service Changes
+
+```
+Add trail earnings aggregation endpoint
+Improve error handling in Binance API client
+Optimize position detection query
+```
+
+### Database Changes
+
+```
+Add indexes to improve trail query performance
+Migrate position status to enum type
+Add cascade delete for trail positions
+```
+
+### Configuration/Setup
+
+```
+Update TypeScript config for stricter checks
+Add environment variables for Binance API
+Configure ESLint rules for React hooks
+```
+
+## Anti-Patterns to Avoid
+
+❌ **Vague messages**: "Fix bug", "Update code", "Changes"
+❌ **Too much detail**: Don't paste the entire diff
+❌ **Humor without context**: "YOLO commit" (unless your team loves this)
+❌ **Passive voice**: "Bug was fixed" → "Fix bug"
+❌ **Mixing concerns**: Features + fixes + refactors in one commit
+❌ **Commit message novels**: Keep it focused
+❌ **No message**: Using git commit without -m isn't an excuse for "wip"
+
+## Remember
+
+A good commit message:
+
+- ✅ Can be read by future you
+- ✅ Helps reviewers understand changes quickly
+- ✅ Makes git history useful for debugging
+- ✅ Documents the evolution of your codebase
+- ✅ Respects your team's time
+
+**Write commits like you're helping, not just documenting.**
