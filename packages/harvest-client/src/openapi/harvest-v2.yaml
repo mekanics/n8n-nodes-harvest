@@ -1,0 +1,2488 @@
+openapi: 3.1.0
+info:
+  title: Harvest API
+  description: |
+    Harvest is a time tracking and invoicing application. This OpenAPI specification
+    covers the Harvest API v2. For more information, visit https://help.getharvest.com/api-v2/
+  version: 2.0.0
+  contact:
+    name: Harvest API Support
+    url: https://help.getharvest.com/api-v2/
+
+servers:
+  - url: https://api.harvestapp.com/v2
+    description: Harvest API v2
+
+security:
+  - BearerAuth: []
+  - OAuth2: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: Personal Access Token
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://id.getharvest.com/oauth2/authorize
+          tokenUrl: https://id.getharvest.com/api/v2/oauth2/token
+          scopes: {}
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: The page number to use in pagination
+      schema:
+        type: integer
+        default: 1
+    PerPageParam:
+      name: per_page
+      in: query
+      description: The number of records to return per page (1-2000)
+      schema:
+        type: integer
+        default: 2000
+        minimum: 1
+        maximum: 2000
+    UpdatedSinceParam:
+      name: updated_since
+      in: query
+      description: Only return records that have been updated since the given date-time
+      schema:
+        type: string
+        format: date-time
+    IsActiveParam:
+      name: is_active
+      in: query
+      description: Filter by active status
+      schema:
+        type: boolean
+
+  schemas:
+    # Pagination
+    PaginationLinks:
+      type: object
+      properties:
+        first:
+          type: string
+          nullable: true
+        last:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+        next:
+          type: string
+          nullable: true
+
+    # Common reference objects
+    UserReference:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+
+    ClientReference:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        currency:
+          type: string
+
+    ProjectReference:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        code:
+          type: string
+          nullable: true
+
+    TaskReference:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+
+    InvoiceReference:
+      type: object
+      properties:
+        id:
+          type: integer
+        number:
+          type: string
+
+    # Company
+    Company:
+      type: object
+      properties:
+        base_uri:
+          type: string
+        full_domain:
+          type: string
+        name:
+          type: string
+        is_active:
+          type: boolean
+        week_start_day:
+          type: string
+          enum: [Saturday, Sunday, Monday]
+        wants_timestamp_timers:
+          type: boolean
+        time_format:
+          type: string
+          enum: [decimal, hours_minutes]
+        date_format:
+          type: string
+        plan_type:
+          type: string
+        clock:
+          type: string
+          enum: ['12h', '24h']
+        decimal_symbol:
+          type: string
+        thousands_separator:
+          type: string
+        color_scheme:
+          type: string
+        expense_feature:
+          type: boolean
+        invoice_feature:
+          type: boolean
+        estimate_feature:
+          type: boolean
+        approval_feature:
+          type: boolean
+
+    # User
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+        telephone:
+          type: string
+          nullable: true
+        timezone:
+          type: string
+        has_access_to_all_future_projects:
+          type: boolean
+        is_contractor:
+          type: boolean
+        is_active:
+          type: boolean
+        calendar_integration_enabled:
+          type: boolean
+        calendar_integration_source:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        can_create_projects:
+          type: boolean
+        default_hourly_rate:
+          type: number
+          nullable: true
+        cost_rate:
+          type: number
+          nullable: true
+        roles:
+          type: array
+          items:
+            type: string
+        access_roles:
+          type: array
+          items:
+            type: string
+        avatar_url:
+          type: string
+
+    UserList:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        per_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_entries:
+          type: integer
+        page:
+          type: integer
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    CreateUser:
+      type: object
+      required:
+        - first_name
+        - last_name
+        - email
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+        telephone:
+          type: string
+        timezone:
+          type: string
+        has_access_to_all_future_projects:
+          type: boolean
+        is_contractor:
+          type: boolean
+        is_active:
+          type: boolean
+        default_hourly_rate:
+          type: number
+        cost_rate:
+          type: number
+        roles:
+          type: array
+          items:
+            type: string
+        access_roles:
+          type: array
+          items:
+            type: string
+
+    UpdateUser:
+      type: object
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+        telephone:
+          type: string
+        timezone:
+          type: string
+        has_access_to_all_future_projects:
+          type: boolean
+        is_contractor:
+          type: boolean
+        is_active:
+          type: boolean
+        default_hourly_rate:
+          type: number
+        cost_rate:
+          type: number
+        roles:
+          type: array
+          items:
+            type: string
+        access_roles:
+          type: array
+          items:
+            type: string
+
+    # Client
+    Client:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        is_active:
+          type: boolean
+        address:
+          type: string
+          nullable: true
+        statement_key:
+          type: string
+        currency:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ClientList:
+      type: object
+      properties:
+        clients:
+          type: array
+          items:
+            $ref: '#/components/schemas/Client'
+        per_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_entries:
+          type: integer
+        page:
+          type: integer
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    CreateClient:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        is_active:
+          type: boolean
+        address:
+          type: string
+        currency:
+          type: string
+
+    UpdateClient:
+      type: object
+      properties:
+        name:
+          type: string
+        is_active:
+          type: boolean
+        address:
+          type: string
+        currency:
+          type: string
+
+    # Client Contact
+    ClientContact:
+      type: object
+      properties:
+        id:
+          type: integer
+        client:
+          $ref: '#/components/schemas/ClientReference'
+        title:
+          type: string
+          nullable: true
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        phone_office:
+          type: string
+          nullable: true
+        phone_mobile:
+          type: string
+          nullable: true
+        fax:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ClientContactList:
+      type: object
+      properties:
+        contacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClientContact'
+        per_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_entries:
+          type: integer
+        page:
+          type: integer
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    CreateClientContact:
+      type: object
+      required:
+        - client_id
+        - first_name
+      properties:
+        client_id:
+          type: integer
+        title:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone_office:
+          type: string
+        phone_mobile:
+          type: string
+        fax:
+          type: string
+
+    UpdateClientContact:
+      type: object
+      properties:
+        title:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone_office:
+          type: string
+        phone_mobile:
+          type: string
+        fax:
+          type: string
+
+    # Project
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        code:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        is_billable:
+          type: boolean
+        is_fixed_fee:
+          type: boolean
+        bill_by:
+          type: string
+          enum: [Project, Tasks, People, none]
+        budget:
+          type: number
+          nullable: true
+        budget_by:
+          type: string
+          enum: [project, project_cost, task, task_fees, person, none]
+        budget_is_monthly:
+          type: boolean
+        notify_when_over_budget:
+          type: boolean
+        over_budget_notification_percentage:
+          type: number
+        show_budget_to_all:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        starts_on:
+          type: string
+          format: date
+          nullable: true
+        ends_on:
+          type: string
+          format: date
+          nullable: true
+        over_budget_notification_date:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        cost_budget:
+          type: number
+          nullable: true
+        cost_budget_include_expenses:
+          type: boolean
+        hourly_rate:
+          type: number
+          nullable: true
+        fee:
+          type: number
+          nullable: true
+        client:
+          $ref: '#/components/schemas/ClientReference'
+
+    ProjectList:
+      type: object
+      properties:
+        projects:
+          type: array
+          items:
+            $ref: '#/components/schemas/Project'
+        per_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_entries:
+          type: integer
+        page:
+          type: integer
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    CreateProject:
+      type: object
+      required:
+        - client_id
+        - name
+        - is_billable
+        - bill_by
+        - budget_by
+      properties:
+        client_id:
+          type: integer
+        name:
+          type: string
+        code:
+          type: string
+        is_active:
+          type: boolean
+        is_billable:
+          type: boolean
+        is_fixed_fee:
+          type: boolean
+        bill_by:
+          type: string
+          enum: [Project, Tasks, People, none]
+        hourly_rate:
+          type: number
+        budget:
+          type: number
+        budget_by:
+          type: string
+          enum: [project, project_cost, task, task_fees, person, none]
+        budget_is_monthly:
+          type: boolean
+        notify_when_over_budget:
+          type: boolean
+        over_budget_notification_percentage:
+          type: number
+        show_budget_to_all:
+          type: boolean
+        cost_budget:
+          type: number
+        cost_budget_include_expenses:
+          type: boolean
+        fee:
+          type: number
+        notes:
+          type: string
+        starts_on:
+          type: string
+          format: date
+        ends_on:
+          type: string
+          format: date
+
+    UpdateProject:
+      type: object
+      properties:
+        client_id:
+          type: integer
+        name:
+          type: string
+        code:
+          type: string
+        is_active:
+          type: boolean
+        is_billable:
+          type: boolean
+        is_fixed_fee:
+          type: boolean
+        bill_by:
+          type: string
+          enum: [Project, Tasks, People, none]
+        hourly_rate:
+          type: number
+        budget:
+          type: number
+        budget_by:
+          type: string
+          enum: [project, project_cost, task, task_fees, person, none]
+        budget_is_monthly:
+          type: boolean
+        notify_when_over_budget:
+          type: boolean
+        over_budget_notification_percentage:
+          type: number
+        show_budget_to_all:
+          type: boolean
+        cost_budget:
+          type: number
+        cost_budget_include_expenses:
+          type: boolean
+        fee:
+          type: number
+        notes:
+          type: string
+        starts_on:
+          type: string
+          format: date
+        ends_on:
+          type: string
+          format: date
+
+    # Task
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        billable_by_default:
+          type: boolean
+        default_hourly_rate:
+          type: number
+          nullable: true
+        is_default:
+          type: boolean
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TaskList:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        per_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_entries:
+          type: integer
+        page:
+          type: integer
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    CreateTask:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        billable_by_default:
+          type: boolean
+        default_hourly_rate:
+          type: number
+        is_default:
+          type: boolean
+        is_active:
+          type: boolean
+
+    UpdateTask:
+      type: object
+      properties:
+        name:
+          type: string
+        billable_by_default:
+          type: boolean
+        default_hourly_rate:
+          type: number
+        is_default:
+          type: boolean
+        is_active:
+          type: boolean
+
+    # Time Entry
+    TimeEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        spent_date:
+          type: string
+          format: date
+        hours:
+          type: number
+        hours_without_timer:
+          type: number
+        rounded_hours:
+          type: number
+        notes:
+          type: string
+          nullable: true
+        is_locked:
+          type: boolean
+        locked_reason:
+          type: string
+          nullable: true
+        is_closed:
+          type: boolean
+        is_billed:
+          type: boolean
+        timer_started_at:
+          type: string
+          format: date-time
+          nullable: true
+        started_time:
+          type: string
+          nullable: true
+        ended_time:
+          type: string
+          nullable: true
+        is_running:
+          type: boolean
+        billable:
+          type: boolean
+        budgeted:
+          type: boolean
+        billable_rate:
+          type: number
+          nullable: true
+        cost_rate:
+          type: number
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/UserReference'
+        client:
+          $ref: '#/components/schemas/ClientReference'
+        project:
+          $ref: '#/components/schemas/ProjectReference'
+        task:
+          $ref: '#/components/schemas/TaskReference'
+        user_assignment:
+          type: object
+          properties:
+            id:
+              type: integer
+            is_project_manager:
+              type: boolean
+            is_active:
+              type: boolean
+            use_default_rates:
+              type: boolean
+            budget:
+              type: number
+              nullable: true
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+            hourly_rate:
+              type: number
+              nullable: true
+        task_assignment:
+          type: object
+          properties:
+            id:
+              type: integer
+            billable:
+              type: boolean
+            is_active:
+              type: boolean
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+            hourly_rate:
+              type: number
+              nullable: true
+            budget:
+              type: number
+              nullable: true
+        invoice:
+          $ref: '#/components/schemas/InvoiceReference'
+          nullable: true
+        external_reference:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+            group_id:
+              type: string
+            account_id:
+              type: string
+            permalink:
+              type: string
+
+    TimeEntryList:
+      type: object
+      properties:
+        time_entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeEntry'
+        per_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_entries:
+          type: integer
+        page:
+          type: integer
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    CreateTimeEntry:
+      type: object
+      required:
+        - project_id
+        - task_id
+        - spent_date
+      properties:
+        user_id:
+          type: integer
+          description: Defaults to the currently authenticated user
+        project_id:
+          type: integer
+        task_id:
+          type: integer
+        spent_date:
+          type: string
+          format: date
+        started_time:
+          type: string
+          description: Time of day in HH:MM format (24 hour)
+        ended_time:
+          type: string
+          description: Time of day in HH:MM format (24 hour)
+        hours:
+          type: number
+        notes:
+          type: string
+        external_reference:
+          type: object
+          properties:
+            id:
+              type: string
+            group_id:
+              type: string
+            permalink:
+              type: string
+
+    UpdateTimeEntry:
+      type: object
+      properties:
+        project_id:
+          type: integer
+        task_id:
+          type: integer
+        spent_date:
+          type: string
+          format: date
+        started_time:
+          type: string
+        ended_time:
+          type: string
+        hours:
+          type: number
+        notes:
+          type: string
+        external_reference:
+          type: object
+          properties:
+            id:
+              type: string
+            group_id:
+              type: string
+            permalink:
+              type: string
+
+    # Invoice
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: integer
+        client_key:
+          type: string
+        number:
+          type: string
+        purchase_order:
+          type: string
+          nullable: true
+        amount:
+          type: number
+        due_amount:
+          type: number
+        tax:
+          type: number
+          nullable: true
+        tax_amount:
+          type: number
+        tax2:
+          type: number
+          nullable: true
+        tax2_amount:
+          type: number
+        discount:
+          type: number
+          nullable: true
+        discount_amount:
+          type: number
+        subject:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        currency:
+          type: string
+        state:
+          type: string
+          enum: [draft, open, paid, closed]
+        period_start:
+          type: string
+          format: date
+          nullable: true
+        period_end:
+          type: string
+          format: date
+          nullable: true
+        issue_date:
+          type: string
+          format: date
+        due_date:
+          type: string
+          format: date
+        payment_term:
+          type: string
+          enum: [upon receipt, net 15, net 30, net 45, net 60, custom]
+        sent_at:
+          type: string
+          format: date-time
+          nullable: true
+        paid_at:
+          type: string
+          format: date-time
+          nullable: true
+        paid_date:
+          type: string
+          format: date
+          nullable: true
+        closed_at:
+          type: string
+          format: date-time
+          nullable: true
+        recurring_invoice_id:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        client:
+          $ref: '#/components/schemas/ClientReference'
+        estimate:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+        retainer:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+        creator:
+          $ref: '#/components/schemas/UserReference'
+        line_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvoiceLineItem'
+
+    InvoiceLineItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        kind:
+          type: string
+          enum: [Service, Product]
+        description:
+          type: string
+        quantity:
+          type: number
+        unit_price:
+          type: number
+        amount:
+          type: number
+        taxed:
+          type: boolean
+        taxed2:
+          type: boolean
+        project:
+          $ref: '#/components/schemas/ProjectReference'
+          nullable: true
+
+    InvoiceList:
+      type: object
+      properties:
+        invoices:
+          type: array
+          items:
+            $ref: '#/components/schemas/Invoice'
+        per_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_entries:
+          type: integer
+        page:
+          type: integer
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    CreateInvoice:
+      type: object
+      required:
+        - client_id
+      properties:
+        client_id:
+          type: integer
+        retainer_id:
+          type: integer
+        estimate_id:
+          type: integer
+        number:
+          type: string
+        purchase_order:
+          type: string
+        tax:
+          type: number
+        tax2:
+          type: number
+        discount:
+          type: number
+        subject:
+          type: string
+        notes:
+          type: string
+        currency:
+          type: string
+        issue_date:
+          type: string
+          format: date
+        due_date:
+          type: string
+          format: date
+        payment_term:
+          type: string
+          enum: [upon receipt, net 15, net 30, net 45, net 60, custom]
+        line_items:
+          type: array
+          items:
+            type: object
+            properties:
+              kind:
+                type: string
+                enum: [Service, Product]
+              description:
+                type: string
+              quantity:
+                type: number
+              unit_price:
+                type: number
+              taxed:
+                type: boolean
+              taxed2:
+                type: boolean
+              project_id:
+                type: integer
+
+    UpdateInvoice:
+      type: object
+      properties:
+        client_id:
+          type: integer
+        retainer_id:
+          type: integer
+        estimate_id:
+          type: integer
+        number:
+          type: string
+        purchase_order:
+          type: string
+        tax:
+          type: number
+        tax2:
+          type: number
+        discount:
+          type: number
+        subject:
+          type: string
+        notes:
+          type: string
+        currency:
+          type: string
+        issue_date:
+          type: string
+          format: date
+        due_date:
+          type: string
+          format: date
+        payment_term:
+          type: string
+          enum: [upon receipt, net 15, net 30, net 45, net 60, custom]
+        line_items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              kind:
+                type: string
+                enum: [Service, Product]
+              description:
+                type: string
+              quantity:
+                type: number
+              unit_price:
+                type: number
+              taxed:
+                type: boolean
+              taxed2:
+                type: boolean
+              project_id:
+                type: integer
+              _destroy:
+                type: boolean
+
+    # Expense
+    Expense:
+      type: object
+      properties:
+        id:
+          type: integer
+        notes:
+          type: string
+          nullable: true
+        total_cost:
+          type: number
+        units:
+          type: number
+        is_closed:
+          type: boolean
+        is_locked:
+          type: boolean
+        is_billed:
+          type: boolean
+        locked_reason:
+          type: string
+          nullable: true
+        spent_date:
+          type: string
+          format: date
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        billable:
+          type: boolean
+        receipt:
+          type: object
+          nullable: true
+          properties:
+            url:
+              type: string
+            file_name:
+              type: string
+            file_size:
+              type: integer
+            content_type:
+              type: string
+        user:
+          $ref: '#/components/schemas/UserReference'
+        user_assignment:
+          type: object
+          properties:
+            id:
+              type: integer
+            is_project_manager:
+              type: boolean
+            is_active:
+              type: boolean
+            use_default_rates:
+              type: boolean
+            budget:
+              type: number
+              nullable: true
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+            hourly_rate:
+              type: number
+              nullable: true
+        project:
+          $ref: '#/components/schemas/ProjectReference'
+        expense_category:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            unit_price:
+              type: number
+              nullable: true
+            unit_name:
+              type: string
+              nullable: true
+        client:
+          $ref: '#/components/schemas/ClientReference'
+        invoice:
+          $ref: '#/components/schemas/InvoiceReference'
+          nullable: true
+
+    ExpenseList:
+      type: object
+      properties:
+        expenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Expense'
+        per_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_entries:
+          type: integer
+        page:
+          type: integer
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    CreateExpense:
+      type: object
+      required:
+        - project_id
+        - expense_category_id
+        - spent_date
+      properties:
+        user_id:
+          type: integer
+        project_id:
+          type: integer
+        expense_category_id:
+          type: integer
+        spent_date:
+          type: string
+          format: date
+        units:
+          type: number
+        total_cost:
+          type: number
+        notes:
+          type: string
+        billable:
+          type: boolean
+        receipt:
+          type: string
+          format: binary
+
+    UpdateExpense:
+      type: object
+      properties:
+        project_id:
+          type: integer
+        expense_category_id:
+          type: integer
+        spent_date:
+          type: string
+          format: date
+        units:
+          type: number
+        total_cost:
+          type: number
+        notes:
+          type: string
+        billable:
+          type: boolean
+        receipt:
+          type: string
+          format: binary
+        delete_receipt:
+          type: boolean
+
+    # Expense Category
+    ExpenseCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        unit_name:
+          type: string
+          nullable: true
+        unit_price:
+          type: number
+          nullable: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ExpenseCategoryList:
+      type: object
+      properties:
+        expense_categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpenseCategory'
+        per_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_entries:
+          type: integer
+        page:
+          type: integer
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    # Project Task Assignment
+    ProjectTaskAssignment:
+      type: object
+      properties:
+        id:
+          type: integer
+        billable:
+          type: boolean
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        hourly_rate:
+          type: number
+          nullable: true
+        budget:
+          type: number
+          nullable: true
+        project:
+          $ref: '#/components/schemas/ProjectReference'
+        task:
+          $ref: '#/components/schemas/TaskReference'
+
+    ProjectTaskAssignmentList:
+      type: object
+      properties:
+        task_assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectTaskAssignment'
+        per_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_entries:
+          type: integer
+        page:
+          type: integer
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    # Project User Assignment
+    ProjectUserAssignment:
+      type: object
+      properties:
+        id:
+          type: integer
+        is_active:
+          type: boolean
+        is_project_manager:
+          type: boolean
+        use_default_rates:
+          type: boolean
+        hourly_rate:
+          type: number
+          nullable: true
+        budget:
+          type: number
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        project:
+          $ref: '#/components/schemas/ProjectReference'
+        user:
+          $ref: '#/components/schemas/UserReference'
+
+    ProjectUserAssignmentList:
+      type: object
+      properties:
+        user_assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectUserAssignment'
+        per_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_entries:
+          type: integer
+        page:
+          type: integer
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    # Error
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+
+  headers:
+    Harvest-Account-Id:
+      description: The Harvest Account ID
+      required: true
+      schema:
+        type: string
+
+paths:
+  # Company
+  /company:
+    get:
+      operationId: getCompany
+      summary: Retrieve company information
+      tags: [Company]
+      responses:
+        '200':
+          description: Company details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+
+  # Users
+  /users:
+    get:
+      operationId: listUsers
+      summary: List all users
+      tags: [Users]
+      parameters:
+        - $ref: '#/components/parameters/IsActiveParam'
+        - $ref: '#/components/parameters/UpdatedSinceParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+      responses:
+        '200':
+          description: A list of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserList'
+    post:
+      operationId: createUser
+      summary: Create a user
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUser'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /users/me:
+    get:
+      operationId: getCurrentUser
+      summary: Retrieve the currently authenticated user
+      tags: [Users]
+      responses:
+        '200':
+          description: Current user details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /users/{userId}:
+    get:
+      operationId: getUser
+      summary: Retrieve a user
+      tags: [Users]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    patch:
+      operationId: updateUser
+      summary: Update a user
+      tags: [Users]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUser'
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    delete:
+      operationId: deleteUser
+      summary: Delete a user
+      tags: [Users]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User deleted
+
+  # Clients
+  /clients:
+    get:
+      operationId: listClients
+      summary: List all clients
+      tags: [Clients]
+      parameters:
+        - $ref: '#/components/parameters/IsActiveParam'
+        - $ref: '#/components/parameters/UpdatedSinceParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+      responses:
+        '200':
+          description: A list of clients
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientList'
+    post:
+      operationId: createClient
+      summary: Create a client
+      tags: [Clients]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClient'
+      responses:
+        '201':
+          description: Client created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+
+  /clients/{clientId}:
+    get:
+      operationId: getClient
+      summary: Retrieve a client
+      tags: [Clients]
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Client details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+    patch:
+      operationId: updateClient
+      summary: Update a client
+      tags: [Clients]
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateClient'
+      responses:
+        '200':
+          description: Client updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+    delete:
+      operationId: deleteClient
+      summary: Delete a client
+      tags: [Clients]
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Client deleted
+
+  # Contacts
+  /contacts:
+    get:
+      operationId: listContacts
+      summary: List all client contacts
+      tags: [Contacts]
+      parameters:
+        - name: client_id
+          in: query
+          description: Filter contacts by client
+          schema:
+            type: integer
+        - $ref: '#/components/parameters/UpdatedSinceParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+      responses:
+        '200':
+          description: A list of contacts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientContactList'
+    post:
+      operationId: createContact
+      summary: Create a client contact
+      tags: [Contacts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClientContact'
+      responses:
+        '201':
+          description: Contact created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientContact'
+
+  /contacts/{contactId}:
+    get:
+      operationId: getContact
+      summary: Retrieve a client contact
+      tags: [Contacts]
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Contact details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientContact'
+    patch:
+      operationId: updateContact
+      summary: Update a client contact
+      tags: [Contacts]
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateClientContact'
+      responses:
+        '200':
+          description: Contact updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientContact'
+    delete:
+      operationId: deleteContact
+      summary: Delete a client contact
+      tags: [Contacts]
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Contact deleted
+
+  # Projects
+  /projects:
+    get:
+      operationId: listProjects
+      summary: List all projects
+      tags: [Projects]
+      parameters:
+        - $ref: '#/components/parameters/IsActiveParam'
+        - name: client_id
+          in: query
+          description: Filter projects by client
+          schema:
+            type: integer
+        - $ref: '#/components/parameters/UpdatedSinceParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+      responses:
+        '200':
+          description: A list of projects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectList'
+    post:
+      operationId: createProject
+      summary: Create a project
+      tags: [Projects]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProject'
+      responses:
+        '201':
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+
+  /projects/{projectId}:
+    get:
+      operationId: getProject
+      summary: Retrieve a project
+      tags: [Projects]
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+    patch:
+      operationId: updateProject
+      summary: Update a project
+      tags: [Projects]
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProject'
+      responses:
+        '200':
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+    delete:
+      operationId: deleteProject
+      summary: Delete a project
+      tags: [Projects]
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Project deleted
+
+  # Tasks
+  /tasks:
+    get:
+      operationId: listTasks
+      summary: List all tasks
+      tags: [Tasks]
+      parameters:
+        - $ref: '#/components/parameters/IsActiveParam'
+        - $ref: '#/components/parameters/UpdatedSinceParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+      responses:
+        '200':
+          description: A list of tasks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskList'
+    post:
+      operationId: createTask
+      summary: Create a task
+      tags: [Tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTask'
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+
+  /tasks/{taskId}:
+    get:
+      operationId: getTask
+      summary: Retrieve a task
+      tags: [Tasks]
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+    patch:
+      operationId: updateTask
+      summary: Update a task
+      tags: [Tasks]
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTask'
+      responses:
+        '200':
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+    delete:
+      operationId: deleteTask
+      summary: Delete a task
+      tags: [Tasks]
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Task deleted
+
+  # Time Entries
+  /time_entries:
+    get:
+      operationId: listTimeEntries
+      summary: List all time entries
+      tags: [Time Entries]
+      parameters:
+        - name: user_id
+          in: query
+          description: Filter by user
+          schema:
+            type: integer
+        - name: client_id
+          in: query
+          description: Filter by client
+          schema:
+            type: integer
+        - name: project_id
+          in: query
+          description: Filter by project
+          schema:
+            type: integer
+        - name: task_id
+          in: query
+          description: Filter by task
+          schema:
+            type: integer
+        - name: external_reference_id
+          in: query
+          description: Filter by external reference ID
+          schema:
+            type: string
+        - name: is_billed
+          in: query
+          description: Filter by billed status
+          schema:
+            type: boolean
+        - name: is_running
+          in: query
+          description: Filter by running status
+          schema:
+            type: boolean
+        - name: from
+          in: query
+          description: Only return time entries with a spent_date on or after this date
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          description: Only return time entries with a spent_date on or before this date
+          schema:
+            type: string
+            format: date
+        - $ref: '#/components/parameters/UpdatedSinceParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+      responses:
+        '200':
+          description: A list of time entries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeEntryList'
+    post:
+      operationId: createTimeEntry
+      summary: Create a time entry
+      tags: [Time Entries]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTimeEntry'
+      responses:
+        '201':
+          description: Time entry created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeEntry'
+
+  /time_entries/{timeEntryId}:
+    get:
+      operationId: getTimeEntry
+      summary: Retrieve a time entry
+      tags: [Time Entries]
+      parameters:
+        - name: timeEntryId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Time entry details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeEntry'
+    patch:
+      operationId: updateTimeEntry
+      summary: Update a time entry
+      tags: [Time Entries]
+      parameters:
+        - name: timeEntryId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTimeEntry'
+      responses:
+        '200':
+          description: Time entry updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeEntry'
+    delete:
+      operationId: deleteTimeEntry
+      summary: Delete a time entry
+      tags: [Time Entries]
+      parameters:
+        - name: timeEntryId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Time entry deleted
+
+  /time_entries/{timeEntryId}/restart:
+    patch:
+      operationId: restartTimeEntry
+      summary: Restart a stopped time entry
+      tags: [Time Entries]
+      parameters:
+        - name: timeEntryId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Time entry restarted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeEntry'
+
+  /time_entries/{timeEntryId}/stop:
+    patch:
+      operationId: stopTimeEntry
+      summary: Stop a running time entry
+      tags: [Time Entries]
+      parameters:
+        - name: timeEntryId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Time entry stopped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeEntry'
+
+  # Invoices
+  /invoices:
+    get:
+      operationId: listInvoices
+      summary: List all invoices
+      tags: [Invoices]
+      parameters:
+        - name: client_id
+          in: query
+          description: Filter by client
+          schema:
+            type: integer
+        - name: project_id
+          in: query
+          description: Filter by project
+          schema:
+            type: integer
+        - name: state
+          in: query
+          description: Filter by state
+          schema:
+            type: string
+            enum: [draft, open, paid, closed]
+        - name: from
+          in: query
+          description: Only return invoices with an issue_date on or after
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          description: Only return invoices with an issue_date on or before
+          schema:
+            type: string
+            format: date
+        - $ref: '#/components/parameters/UpdatedSinceParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+      responses:
+        '200':
+          description: A list of invoices
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceList'
+    post:
+      operationId: createInvoice
+      summary: Create an invoice
+      tags: [Invoices]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInvoice'
+      responses:
+        '201':
+          description: Invoice created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+
+  /invoices/{invoiceId}:
+    get:
+      operationId: getInvoice
+      summary: Retrieve an invoice
+      tags: [Invoices]
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Invoice details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+    patch:
+      operationId: updateInvoice
+      summary: Update an invoice
+      tags: [Invoices]
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateInvoice'
+      responses:
+        '200':
+          description: Invoice updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+    delete:
+      operationId: deleteInvoice
+      summary: Delete an invoice
+      tags: [Invoices]
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Invoice deleted
+
+  # Expenses
+  /expenses:
+    get:
+      operationId: listExpenses
+      summary: List all expenses
+      tags: [Expenses]
+      parameters:
+        - name: user_id
+          in: query
+          description: Filter by user
+          schema:
+            type: integer
+        - name: client_id
+          in: query
+          description: Filter by client
+          schema:
+            type: integer
+        - name: project_id
+          in: query
+          description: Filter by project
+          schema:
+            type: integer
+        - name: is_billed
+          in: query
+          description: Filter by billed status
+          schema:
+            type: boolean
+        - name: from
+          in: query
+          description: Only return expenses with a spent_date on or after
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          description: Only return expenses with a spent_date on or before
+          schema:
+            type: string
+            format: date
+        - $ref: '#/components/parameters/UpdatedSinceParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+      responses:
+        '200':
+          description: A list of expenses
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseList'
+    post:
+      operationId: createExpense
+      summary: Create an expense
+      tags: [Expenses]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateExpense'
+      responses:
+        '201':
+          description: Expense created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expense'
+
+  /expenses/{expenseId}:
+    get:
+      operationId: getExpense
+      summary: Retrieve an expense
+      tags: [Expenses]
+      parameters:
+        - name: expenseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Expense details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expense'
+    patch:
+      operationId: updateExpense
+      summary: Update an expense
+      tags: [Expenses]
+      parameters:
+        - name: expenseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UpdateExpense'
+      responses:
+        '200':
+          description: Expense updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expense'
+    delete:
+      operationId: deleteExpense
+      summary: Delete an expense
+      tags: [Expenses]
+      parameters:
+        - name: expenseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Expense deleted
+
+  # Expense Categories
+  /expense_categories:
+    get:
+      operationId: listExpenseCategories
+      summary: List all expense categories
+      tags: [Expense Categories]
+      parameters:
+        - $ref: '#/components/parameters/IsActiveParam'
+        - $ref: '#/components/parameters/UpdatedSinceParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+      responses:
+        '200':
+          description: A list of expense categories
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseCategoryList'
+
+  # Project Task Assignments
+  /projects/{projectId}/task_assignments:
+    get:
+      operationId: listProjectTaskAssignments
+      summary: List all task assignments for a project
+      tags: [Project Assignments]
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - $ref: '#/components/parameters/IsActiveParam'
+        - $ref: '#/components/parameters/UpdatedSinceParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+      responses:
+        '200':
+          description: A list of task assignments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTaskAssignmentList'
+
+  # Project User Assignments
+  /projects/{projectId}/user_assignments:
+    get:
+      operationId: listProjectUserAssignments
+      summary: List all user assignments for a project
+      tags: [Project Assignments]
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - $ref: '#/components/parameters/IsActiveParam'
+        - $ref: '#/components/parameters/UpdatedSinceParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+      responses:
+        '200':
+          description: A list of user assignments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectUserAssignmentList'
