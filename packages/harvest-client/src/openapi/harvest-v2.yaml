@@ -1096,114 +1096,249 @@ components:
       properties:
         client_id:
           type: integer
+          description: The ID of the client this invoice belongs to
         retainer_id:
           type: integer
+          description: The ID of the retainer associated with this invoice
         estimate_id:
           type: integer
+          description: The ID of the estimate associated with this invoice
         number:
           type: string
+          description: If no value is set, the number will be automatically generated
         purchase_order:
           type: string
+          description: The purchase order number
         tax:
           type: number
+          description: This percentage is applied to the subtotal, including line items and discounts
         tax2:
           type: number
+          description: This percentage is applied to the subtotal, including line items and discounts
         discount:
           type: number
+          description: This percentage is subtracted from the subtotal
         subject:
           type: string
+          description: The invoice subject
         notes:
           type: string
+          description: Any additional notes to include on the invoice
         currency:
           type: string
+          description: The currency used by the invoice. If not provided, the client's currency will be used
         issue_date:
           type: string
           format: date
+          description: Date the invoice was issued
         due_date:
           type: string
           format: date
+          description: Date the invoice is due
         payment_term:
           type: string
           enum: [upon receipt, net 15, net 30, net 45, net 60, custom]
+          description: The timeframe in which the invoice should be paid
+        payment_options:
+          type: array
+          items:
+            type: string
+            enum: [ach, credit_card, paypal]
+          description: The payment options available to pay the invoice
+        # Parameters for importing tracked time and expenses
+        from:
+          type: string
+          format: date
+          description: Only time entries and expenses with a spent_date on or after this date will be included (for tracked time/expenses import)
+        to:
+          type: string
+          format: date
+          description: Only time entries and expenses with a spent_date on or before this date will be included (for tracked time/expenses import)
+        projects:
+          type: array
+          items:
+            type: integer
+          description: Array of project IDs to include when importing time/expenses
+        import_hours:
+          type: string
+          enum: [all, yes, no]
+          description: Whether to import time entries. Use 'all' to import all, 'yes' to import only uninvoiced, 'no' to skip
+        import_expenses:
+          type: string
+          enum: [all, yes, no]
+          description: Whether to import expenses. Use 'all' to import all, 'yes' to import only uninvoiced, 'no' to skip
+        summary_type:
+          type: string
+          enum: [task, project, people, detailed]
+          description: How to summarize time entries on the invoice. 'task' groups by task, 'project' groups by project, 'people' groups by person, 'detailed' shows all entries individually
+        line_items_import:
+          type: object
+          description: A line items import object for importing time/expenses into invoice line items
+          required:
+            - project_ids
+          properties:
+            project_ids:
+              type: array
+              items:
+                type: integer
+              description: An array of the client's project IDs you'd like to include time/expenses from
+            time:
+              type: object
+              description: A time import object
+              required:
+                - summary_type
+              properties:
+                summary_type:
+                  type: string
+                  enum: [project, task, people, detailed]
+                  description: How to summarize the time entries per line item
+                from:
+                  type: string
+                  format: date
+                  description: Start date for included time entries. Must be provided if to is present. If neither from or to are provided, all unbilled time entries will be included
+                to:
+                  type: string
+                  format: date
+                  description: End date for included time entries. Must be provided if from is present. If neither from or to are provided, all unbilled time entries will be included
+            expenses:
+              type: object
+              description: An expense import object
+              required:
+                - summary_type
+              properties:
+                summary_type:
+                  type: string
+                  enum: [project, category, people, detailed]
+                  description: How to summarize the expenses per line item
+                from:
+                  type: string
+                  format: date
+                  description: Start date for included expenses. Must be provided if to is present. If neither from or to are provided, all unbilled expenses will be included
+                to:
+                  type: string
+                  format: date
+                  description: End date for included expenses. Must be provided if from is present. If neither from or to are provided, all unbilled expenses will be included
+                attach_receipts:
+                  type: boolean
+                  description: If set to true, a PDF containing an expense report with receipts will be attached to the invoice. Defaults to false
+        # Free-form invoice line items
         line_items:
           type: array
+          description: Array of line items for free-form invoices
           items:
             type: object
             properties:
               kind:
                 type: string
                 enum: [Service, Product]
+                description: The name of an invoice item category
               description:
                 type: string
+                description: Text description of the line item
               quantity:
                 type: number
+                description: The unit quantity of the item. Defaults to 1
               unit_price:
                 type: number
+                description: The individual price per unit
               taxed:
                 type: boolean
+                description: Whether the invoice's tax percentage applies to this line item
               taxed2:
                 type: boolean
+                description: Whether the invoice's tax2 percentage applies to this line item
               project_id:
                 type: integer
+                description: The ID of the project associated with this line item
 
     UpdateInvoice:
       type: object
       properties:
         client_id:
           type: integer
+          description: The ID of the client this invoice belongs to
         retainer_id:
           type: integer
+          description: The ID of the retainer associated with this invoice
         estimate_id:
           type: integer
+          description: The ID of the estimate associated with this invoice
         number:
           type: string
+          description: If no value is set, the number will be automatically generated
         purchase_order:
           type: string
+          description: The purchase order number
         tax:
           type: number
+          description: This percentage is applied to the subtotal, including line items and discounts
         tax2:
           type: number
+          description: This percentage is applied to the subtotal, including line items and discounts
         discount:
           type: number
+          description: This percentage is subtracted from the subtotal
         subject:
           type: string
+          description: The invoice subject
         notes:
           type: string
+          description: Any additional notes to include on the invoice
         currency:
           type: string
+          description: The currency used by the invoice
         issue_date:
           type: string
           format: date
+          description: Date the invoice was issued
         due_date:
           type: string
           format: date
+          description: Date the invoice is due
         payment_term:
           type: string
           enum: [upon receipt, net 15, net 30, net 45, net 60, custom]
+          description: The timeframe in which the invoice should be paid
+        payment_options:
+          type: array
+          items:
+            type: string
+            enum: [ach, credit_card, paypal]
+          description: The payment options available to pay the invoice
         line_items:
           type: array
+          description: Array of line items to update, add, or delete
           items:
             type: object
             properties:
               id:
                 type: integer
+                description: Unique ID for the line item (required for updating or deleting existing items)
               kind:
                 type: string
                 enum: [Service, Product]
+                description: The name of an invoice item category
               description:
                 type: string
+                description: Text description of the line item
               quantity:
                 type: number
+                description: The unit quantity of the item
               unit_price:
                 type: number
+                description: The individual price per unit
               taxed:
                 type: boolean
+                description: Whether the invoice's tax percentage applies to this line item
               taxed2:
                 type: boolean
+                description: Whether the invoice's tax2 percentage applies to this line item
               project_id:
                 type: integer
+                description: The ID of the project associated with this line item
               _destroy:
                 type: boolean
+                description: Set to true to delete this line item
 
     # Expense
     Expense:
@@ -1488,6 +1623,207 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProjectUserAssignment'
+        per_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_entries:
+          type: integer
+        page:
+          type: integer
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    # Reports - Time Report Result
+    TimeReportResult:
+      type: object
+      properties:
+        client_id:
+          type: integer
+          nullable: true
+        client_name:
+          type: string
+          nullable: true
+        project_id:
+          type: integer
+          nullable: true
+        project_name:
+          type: string
+          nullable: true
+        task_id:
+          type: integer
+          nullable: true
+        task_name:
+          type: string
+          nullable: true
+        user_id:
+          type: integer
+          nullable: true
+        user_name:
+          type: string
+          nullable: true
+        is_contractor:
+          type: boolean
+          nullable: true
+        total_hours:
+          type: number
+        billable_hours:
+          type: number
+        currency:
+          type: string
+          nullable: true
+        billable_amount:
+          type: number
+
+    TimeReportResults:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeReportResult'
+        per_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_entries:
+          type: integer
+        page:
+          type: integer
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    # Reports - Expense Report Result
+    ExpenseReportResult:
+      type: object
+      properties:
+        client_id:
+          type: integer
+          nullable: true
+        client_name:
+          type: string
+          nullable: true
+        project_id:
+          type: integer
+          nullable: true
+        project_name:
+          type: string
+          nullable: true
+        expense_category_id:
+          type: integer
+          nullable: true
+        expense_category_name:
+          type: string
+          nullable: true
+        user_id:
+          type: integer
+          nullable: true
+        user_name:
+          type: string
+          nullable: true
+        is_contractor:
+          type: boolean
+          nullable: true
+        total_amount:
+          type: number
+        billable_amount:
+          type: number
+        currency:
+          type: string
+          nullable: true
+
+    ExpenseReportResults:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpenseReportResult'
+        per_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_entries:
+          type: integer
+        page:
+          type: integer
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    # Reports - Uninvoiced Report Result
+    UninvoicedReportResult:
+      type: object
+      properties:
+        client_id:
+          type: integer
+        client_name:
+          type: string
+        project_id:
+          type: integer
+        project_name:
+          type: string
+        currency:
+          type: string
+        total_hours:
+          type: number
+        uninvoiced_hours:
+          type: number
+        uninvoiced_expenses:
+          type: number
+        uninvoiced_amount:
+          type: number
+
+    UninvoicedReportResults:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/UninvoicedReportResult'
+        per_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_entries:
+          type: integer
+        page:
+          type: integer
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+
+    # Reports - Project Budget Report Result
+    ProjectBudgetReportResult:
+      type: object
+      properties:
+        client_id:
+          type: integer
+        client_name:
+          type: string
+        project_id:
+          type: integer
+        project_name:
+          type: string
+        budget_is_monthly:
+          type: boolean
+        budget_by:
+          type: string
+        is_active:
+          type: boolean
+        budget:
+          type: number
+          nullable: true
+        budget_spent:
+          type: number
+        budget_remaining:
+          type: number
+
+    ProjectBudgetReportResults:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectBudgetReportResult'
         per_page:
           type: integer
         total_pages:
@@ -2486,3 +2822,294 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProjectUserAssignmentList'
+
+  # Reports - Time Reports
+  /reports/time/clients:
+    get:
+      operationId: getTimeReportByClient
+      summary: Get time report grouped by client
+      tags: [Reports]
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: Start date for the report (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          description: End date for the report (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+      responses:
+        '200':
+          description: Time report grouped by client
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeReportResults'
+
+  /reports/time/projects:
+    get:
+      operationId: getTimeReportByProject
+      summary: Get time report grouped by project
+      tags: [Reports]
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: Start date for the report (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          description: End date for the report (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+      responses:
+        '200':
+          description: Time report grouped by project
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeReportResults'
+
+  /reports/time/tasks:
+    get:
+      operationId: getTimeReportByTask
+      summary: Get time report grouped by task
+      tags: [Reports]
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: Start date for the report (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          description: End date for the report (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+      responses:
+        '200':
+          description: Time report grouped by task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeReportResults'
+
+  /reports/time/team:
+    get:
+      operationId: getTimeReportByTeam
+      summary: Get time report grouped by team member
+      tags: [Reports]
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: Start date for the report (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          description: End date for the report (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+      responses:
+        '200':
+          description: Time report grouped by team member
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeReportResults'
+
+  # Reports - Expense Reports
+  /reports/expenses/clients:
+    get:
+      operationId: getExpenseReportByClient
+      summary: Get expense report grouped by client
+      tags: [Reports]
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: Start date for the report (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          description: End date for the report (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+      responses:
+        '200':
+          description: Expense report grouped by client
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseReportResults'
+
+  /reports/expenses/projects:
+    get:
+      operationId: getExpenseReportByProject
+      summary: Get expense report grouped by project
+      tags: [Reports]
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: Start date for the report (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          description: End date for the report (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+      responses:
+        '200':
+          description: Expense report grouped by project
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseReportResults'
+
+  /reports/expenses/categories:
+    get:
+      operationId: getExpenseReportByCategory
+      summary: Get expense report grouped by category
+      tags: [Reports]
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: Start date for the report (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          description: End date for the report (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+      responses:
+        '200':
+          description: Expense report grouped by category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseReportResults'
+
+  /reports/expenses/team:
+    get:
+      operationId: getExpenseReportByTeam
+      summary: Get expense report grouped by team member
+      tags: [Reports]
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: Start date for the report (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          description: End date for the report (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+      responses:
+        '200':
+          description: Expense report grouped by team member
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseReportResults'
+
+  # Reports - Uninvoiced Report
+  /reports/uninvoiced:
+    get:
+      operationId: getUninvoicedReport
+      summary: Get uninvoiced report
+      tags: [Reports]
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: Start date for the report (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          description: End date for the report (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+      responses:
+        '200':
+          description: Uninvoiced report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UninvoicedReportResults'
+
+  # Reports - Project Budget Report
+  /reports/project_budget:
+    get:
+      operationId: getProjectBudgetReport
+      summary: Get project budget report
+      tags: [Reports]
+      parameters:
+        - $ref: '#/components/parameters/IsActiveParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PerPageParam'
+      responses:
+        '200':
+          description: Project budget report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectBudgetReportResults'
