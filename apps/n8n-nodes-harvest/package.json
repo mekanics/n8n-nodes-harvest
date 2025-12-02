@@ -41,9 +41,7 @@
     "type-check": "tsc --noEmit",
     "prepublishOnly": "pnpm run build"
   },
-  "dependencies": {
-    "openapi-fetch": "^0.13.3"
-  },
+  "dependencies": {},
   "devDependencies": {
     "eslint": "^9.16.0",
     "eslint-config": "workspace:*",

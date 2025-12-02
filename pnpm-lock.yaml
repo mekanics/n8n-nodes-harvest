@@ -20,9 +20,6 @@ importers:
       n8n-workflow:
         specifier: '>=1.0.0'
         version: 1.119.1
-      openapi-fetch:
-        specifier: ^0.13.3
-        version: 0.13.8
     devDependencies:
       eslint:
         specifier: ^9.16.0
