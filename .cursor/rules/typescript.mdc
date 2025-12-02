@@ -1,0 +1,32 @@
+---
+description: 
+globs: *.tsx, *.ts
+---
+
+### General Principles
+
+- Write concise, readable TypeScript code
+- Use functional and declarative programming patterns
+- Follow DRY (Don't Repeat Yourself) principle
+- Implement early returns for better readability
+- Structure components logically: exports, subcomponents, helpers, types
+
+### Naming Conventions
+
+- Use descriptive names with auxiliary verbs (isLoading, hasError)
+- Prefix event handlers with "handle" (handleClick, handleSubmit)
+- Use lowercase with dashes for directories (components/auth-wizard)
+- Favor named exports for components
+
+### TypeScript Usage
+
+- Use TypeScript for all code
+- Prefer types over interfaces
+- Avoid enums; use const maps instead
+- Implement proper type safety and inference
+- Use `satisfies` operator for type validation
+- Create type guards for runtime value validation using `value is Type` syntax
+- Implement type guards for enum-like values and complex object validation
+- Use type guards in repository layers and API boundaries for data integrity
+- Combine type guards with early returns for clean validation flow
+- avoid using `as` casts unless absolutely necessary
