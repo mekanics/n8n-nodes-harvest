@@ -1,0 +1,303 @@
+{
+	"name": "Weekly Harvest Hours Report",
+	"settings": {
+		"executionOrder": "v1"
+	},
+	"versionId": "18b7f27d-e26c-4730-9f01-ba1951e186c4",
+	"nodes": [
+		{
+			"parameters": {
+				"mode": "raw",
+				"jsonOutput": "={\n  \"projectId\": 1234567,\n\n  \"hoursPerWorkday\": 8.4,\n  \n  \"workingDays\": {\n    \"1\": 20,\n    \"2\": 20,\n    \"3\": 22,\n    \"4\": 20,\n    \"5\": 18,\n    \"6\": 22,\n    \"7\": 23,\n    \"8\": 21,\n    \"9\": 22,\n    \"10\": 22,\n    \"11\": 21,\n    \"12\": 18\n  },\n  \"totalWorkingDays\": 249,\n  \n  \"emailTo\": \"you@example.com\",\n  \"emailFrom\": \"noreply@example.com\"\n}",
+				"options": {}
+			},
+			"id": "dc3fb886-6b84-455c-bf7c-e989f5d3c8b1",
+			"name": "Config",
+			"type": "n8n-nodes-base.set",
+			"typeVersion": 3.4,
+			"position": [-416, 240]
+		},
+		{
+			"parameters": {
+				"timeEntryFilters": {
+					"from": "={{ $now.minus({ weeks: 1 }).startOf('week').toFormat('yyyy-MM-dd') }}",
+					"to": "={{ $now.minus({ weeks: 1 }).endOf('week').toFormat('yyyy-MM-dd') }}",
+					"perPage": 2000
+				}
+			},
+			"id": "a2e0868c-1aa2-4a6d-99ea-dec7dc020db1",
+			"name": "Harvest: Last Week",
+			"type": "n8n-nodes-harvest.harvest",
+			"typeVersion": 1,
+			"position": [144, 80]
+		},
+		{
+			"parameters": {
+				"timeEntryFilters": {
+					"from": "={{ $now.startOf('month').toFormat('yyyy-MM-dd') }}",
+					"to": "={{ $now.toFormat('yyyy-MM-dd') }}",
+					"perPage": 2000
+				}
+			},
+			"id": "7bdbcc72-5059-4778-a354-03b360d4fe1a",
+			"name": "Harvest: This Month",
+			"type": "n8n-nodes-harvest.harvest",
+			"typeVersion": 1,
+			"position": [144, 240]
+		},
+		{
+			"parameters": {
+				"timeEntryFilters": {
+					"from": "={{ $now.startOf('year').format('yyyy-MM-dd') }}",
+					"to": "={{ $now.toFormat('yyyy-MM-dd') }}",
+					"perPage": 2000
+				}
+			},
+			"id": "9087b3ab-e1ec-4de4-9101-039a4ab56f60",
+			"name": "Harvest: Year-to-Date",
+			"type": "n8n-nodes-harvest.harvest",
+			"typeVersion": 1,
+			"position": [144, 400]
+		},
+		{
+			"parameters": {
+				"numberInputs": 3
+			},
+			"id": "54fbe3a2-a1fc-4022-a3dc-303d5355a8e3",
+			"name": "Wait for All Harvest Data",
+			"type": "n8n-nodes-base.merge",
+			"typeVersion": 3,
+			"position": [448, 224]
+		},
+		{
+			"parameters": {
+				"jsCode": "// Get config and project data\nconst config = $('Config').first().json;\nconst project = $('Harvest: Get Project').first().json;\n\n// Get budget from project (Harvest returns budget in hours when budget_by is 'project')\nconst TOTAL_BUDGET = project.budget || 0;\nconst PROJECT_NAME = project.name;\nconst BUDGET_BY = project.budget_by;\n\n// Validate budget is set\nif (!TOTAL_BUDGET || TOTAL_BUDGET <= 0) {\n  throw new Error(`Project \"${PROJECT_NAME}\" has no budget set. Please configure a budget in Harvest.`);\n}\n\n// Working days from config\nconst workingDays = config.workingDays;\nconst TOTAL_WORKING_DAYS = config.totalWorkingDays;\nconst HOURS_PER_WORKDAY = config.hoursPerWorkday || 8;\nconst HOURS_PER_DAY = TOTAL_BUDGET / TOTAL_WORKING_DAYS;\n\n// Get time entries from the 3 Harvest nodes\nconst weekEntries = $('Harvest: Last Week').all();\nconst monthEntries = $('Harvest: This Month').all();\nconst ytdEntries = $('Harvest: Year-to-Date').all();\n\n// Sum hours from time entries\nfunction sumHours(entries) {\n  let total = 0;\n  for (const entry of entries) {\n    if (entry.json && entry.json.hours !== undefined) {\n      total += entry.json.hours;\n    }\n  }\n  return Math.round(total * 100) / 100;\n}\n\nconst hoursLastWeek = sumHours(weekEntries);\nconst hoursThisMonth = sumHours(monthEntries);\nconst hoursYTD = sumHours(ytdEntries);\n\n// Current date calculations\nconst now = new Date();\nconst currentMonth = now.getMonth() + 1;\nconst currentDay = now.getDate();\n\n// Calculate cumulative working days until current month\nlet cumulativeWorkingDays = 0;\nfor (let m = 1; m < currentMonth; m++) {\n  cumulativeWorkingDays += workingDays[m.toString()];\n}\n\n// Estimate working days elapsed in current month (proportional)\nconst daysInMonth = new Date(now.getFullYear(), currentMonth, 0).getDate();\nconst monthProgress = currentDay / daysInMonth;\nconst workingDaysElapsedThisMonth = Math.round(workingDays[currentMonth.toString()] * monthProgress);\ncumulativeWorkingDays += workingDaysElapsedThisMonth;\n\n// Calculate targets\nconst monthlyTarget = Math.round(workingDays[currentMonth.toString()] * HOURS_PER_DAY * 100) / 100;\nconst expectedYTD = Math.round(cumulativeWorkingDays * HOURS_PER_DAY * 100) / 100;\n\n// Calculate remaining hours\nconst remainingMonthHours = Math.round((monthlyTarget - hoursThisMonth) * 100) / 100;\nconst remainingBudget = Math.round((TOTAL_BUDGET - hoursYTD) * 100) / 100;\n\n// Calculate remaining working days in the year\nconst remainingWorkingDays = TOTAL_WORKING_DAYS - cumulativeWorkingDays;\n\n// Calculate days per week needed to reach target\nlet daysPerWeekNeeded = 0;\nlet hoursPerDayNeeded = 0;\nif (remainingWorkingDays > 0 && remainingBudget > 0) {\n  hoursPerDayNeeded = remainingBudget / remainingWorkingDays;\n  daysPerWeekNeeded = Math.round((hoursPerDayNeeded / HOURS_PER_WORKDAY) * 5 * 10) / 10;\n}\n\n// Calculate weeks remaining\nconst weeksRemaining = Math.ceil(remainingWorkingDays / 5);\n\n// Determine pace (target: use full budget, not more)\nconst pacePercentage = expectedYTD > 0 ? Math.round((hoursYTD / expectedYTD) * 100) : 0;\nconst budgetUsedPercent = Math.round((hoursYTD / TOTAL_BUDGET) * 100);\n\nlet paceStatus;\nlet paceColor;\n\nif (hoursYTD > TOTAL_BUDGET) {\n  paceStatus = 'Over Budget!';\n  paceColor = '#ef4444'; // red\n} else if (pacePercentage >= 95 && pacePercentage <= 105) {\n  paceStatus = 'On Track';\n  paceColor = '#22c55e'; // green\n} else if (pacePercentage < 95) {\n  paceStatus = 'Behind Schedule';\n  paceColor = '#f59e0b'; // amber - might not use full budget\n} else if (pacePercentage > 105) {\n  paceStatus = 'Ahead - Risk of Over Budget';\n  paceColor = '#f59e0b'; // amber - risk of exceeding\n}\n\n// Calculate progress percentages\nconst monthProgressPercent = monthlyTarget > 0 ? Math.round((hoursThisMonth / monthlyTarget) * 100) : 0;\n\n// Month names for display\nconst monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June', \n                    'July', 'August', 'September', 'October', 'November', 'December'];\n\nreturn [{\n  json: {\n    projectName: PROJECT_NAME,\n    budgetBy: BUDGET_BY,\n    \n    hoursLastWeek,\n    hoursThisMonth,\n    hoursYTD,\n    \n    totalBudget: TOTAL_BUDGET,\n    monthlyTarget,\n    expectedYTD,\n    \n    remainingMonthHours,\n    remainingBudget,\n    remainingWorkingDays,\n    weeksRemaining,\n    \n    hoursPerWorkday: HOURS_PER_WORKDAY,\n    hoursPerDayNeeded: Math.round(hoursPerDayNeeded * 100) / 100,\n    daysPerWeekNeeded,\n    \n    monthProgressPercent,\n    budgetUsedPercent,\n    pacePercentage,\n    paceStatus,\n    paceColor,\n    \n    currentMonth,\n    currentMonthName: monthNames[currentMonth],\n    workingDaysThisMonth: workingDays[currentMonth.toString()],\n    hoursPerDay: Math.round(HOURS_PER_DAY * 100) / 100,\n    reportDate: now.toISOString().split('T')[0],\n    \n    weekRange: `${$now.minus({ weeks: 1 }).startOf('week').toFormat('MMM d')} - ${$now.minus({ weeks: 1 }).endOf('week').toFormat('MMM d, yyyy')}`,\n    \n    emailTo: config.emailTo,\n    emailFrom: config.emailFrom\n  }\n}];"
+			},
+			"id": "503fb242-13f6-4a14-af58-a6982244395f",
+			"name": "Calculate Budget Metrics",
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [672, 240]
+		},
+		{
+			"parameters": {
+				"fromEmail": "={{ $json.emailFrom }}",
+				"toEmail": "={{ $json.emailTo }}",
+				"subject": "=Weekly Hours Report - {{ $json.projectName }} - {{ $json.weekRange }} | {{ $json.paceStatus }}",
+				"html": "=<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 8px; }\n    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 24px; border-radius: 12px 12px 0 0; text-align: center; }\n    .header h1 { margin: 0; font-size: 24px; }\n    .header p { margin: 10px 0 0; opacity: 0.9; }\n    .project-name { font-size: 14px; opacity: 0.8; margin-bottom: 5px; }\n    .content { background: #fff; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px; padding: 24px; }\n    .metric-card { background: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 15px; }\n    .metric-card h3 { margin: 0 0 10px; color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }\n    .metric-value { font-size: 32px; font-weight: 700; color: #111827; }\n    .metric-detail { font-size: 14px; color: #6b7280; margin-top: 5px; }\n    .progress-bar { background: #e5e7eb; border-radius: 9999px; height: 8px; overflow: hidden; margin-top: 10px; }\n    .progress-fill { height: 100%; border-radius: 9999px; transition: width 0.3s; }\n    .status-badge { display: inline-block; padding: 6px 12px; border-radius: 9999px; font-size: 14px; font-weight: 600; }\n    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }\n    .divider { border-top: 1px solid #e5e7eb; margin: 25px 0; }\n    .footer { text-align: center; color: #9ca3af; font-size: 12px; margin-top: 20px; }\n    .budget-highlight { font-size: 18px; font-weight: 600; }\n  </style>\n</head>\n<body>\n  <div class=\"header\">\n    <div class=\"project-name\">{{ $json.projectName }}</div>\n    <h1>Weekly Hours Report</h1>\n    <p>{{ $json.weekRange }}</p>\n  </div>\n  <div class=\"content\">\n    <div style=\"text-align: center; margin-bottom: 25px;\">\n      <span class=\"status-badge\" style=\"background: {{ $json.paceColor }}20; color: {{ $json.paceColor }};\">{{ $json.paceStatus }}</span>\n    </div>\n    \n    <div class=\"metric-card\">\n      <h3>Last Week</h3>\n      <div class=\"metric-value\">{{ $json.hoursLastWeek }}h</div>\n      <div class=\"metric-detail\">Hours tracked last week</div>\n    </div>\n    \n    <div class=\"grid\">\n      <div class=\"metric-card\">\n        <h3>{{ $json.currentMonthName }}</h3>\n        <div class=\"metric-value\">{{ $json.hoursThisMonth }}h</div>\n        <div class=\"metric-detail\">of {{ $json.monthlyTarget }}h target</div>\n        <div class=\"progress-bar\">\n          <div class=\"progress-fill\" style=\"width: {{ Math.min($json.monthProgressPercent, 100) }}%; background: {{ $json.monthProgressPercent > 100 ? '#ef4444' : '#22c55e' }};\"></div>\n        </div>\n        <div class=\"metric-detail\">{{ $json.remainingMonthHours }}h remaining</div>\n      </div>\n      \n      <div class=\"metric-card\">\n        <h3>Project Budget</h3>\n        <div class=\"metric-value\">{{ $json.hoursYTD }}h</div>\n        <div class=\"metric-detail\">of {{ $json.totalBudget }}h total budget</div>\n        <div class=\"progress-bar\">\n          <div class=\"progress-fill\" style=\"width: {{ Math.min($json.budgetUsedPercent, 100) }}%; background: {{ $json.budgetUsedPercent > 100 ? '#ef4444' : $json.budgetUsedPercent > 90 ? '#f59e0b' : '#3b82f6' }};\"></div>\n        </div>\n        <div class=\"metric-detail\"><strong>{{ $json.remainingBudget }}h remaining</strong></div>\n      </div>\n    </div>\n    \n    <div class=\"divider\"></div>\n    \n    <div class=\"metric-card\" style=\"background: {{ $json.remainingBudget < 50 ? '#fef2f2' : '#f0fdf4' }};\">\n      <h3 style=\"color: {{ $json.remainingBudget < 50 ? '#991b1b' : '#166534' }};\">Budget Status</h3>\n      <div class=\"metric-detail\" style=\"color: {{ $json.remainingBudget < 50 ? '#991b1b' : '#166534' }};\">\n        <span class=\"budget-highlight\">{{ $json.budgetUsedPercent }}% of budget used</span><br><br>\n        <strong>Total Budget:</strong> {{ $json.totalBudget }}h<br>\n        <strong>Used:</strong> {{ $json.hoursYTD }}h<br>\n        <strong>Remaining:</strong> {{ $json.remainingBudget }}h<br><br>\n        <strong>Pace:</strong> {{ $json.pacePercentage }}% of expected ({{ $json.expectedYTD }}h expected by now)\n      </div>\n    </div>\n    \n    <div class=\"divider\"></div>\n    \n    <div class=\"metric-card\" style=\"background: #eff6ff; border: 2px solid #3b82f6;\">\n      <h3 style=\"color: #1d4ed8;\">Recommended Workload</h3>\n      <div class=\"metric-value\" style=\"color: #1d4ed8;\">{{ $json.daysPerWeekNeeded }} days/week</div>\n      <div class=\"metric-detail\" style=\"color: #1e40af;\">\n        To use the remaining <strong>{{ $json.remainingBudget }}h</strong> over the next <strong>{{ $json.weeksRemaining }} weeks</strong>,<br>\n        1 person should work <strong>{{ $json.daysPerWeekNeeded }} days per week</strong> ({{ $json.hoursPerDayNeeded }}h/day).<br><br>\n        <em>Based on {{ $json.hoursPerWorkday }}h workdays and {{ $json.remainingWorkingDays }} working days remaining.</em>\n      </div>\n    </div>\n    \n    <div class=\"divider\"></div>\n    \n    <div style=\"font-size: 14px; color: #6b7280;\">\n      <strong>Monthly Breakdown ({{ $json.hoursPerDay }}h/working day target):</strong><br>\n      {{ $json.currentMonthName }}: {{ $json.workingDaysThisMonth }} working days = {{ $json.monthlyTarget }}h target\n    </div>\n  </div>\n  <div class=\"footer\">\n    Report generated on {{ $json.reportDate }}<br>\n    Powered by n8n + Harvest\n  </div>\n</body>\n</html>",
+				"options": {
+					"appendAttribution": false
+				}
+			},
+			"id": "b90ad12e-ccab-495a-99f7-fab33db688a9",
+			"name": "Send Weekly Report",
+			"type": "n8n-nodes-base.emailSend",
+			"typeVersion": 2.1,
+			"position": [928, 240],
+			"webhookId": "ed69acf4-9e68-44af-84fd-af02b648fd2c"
+		},
+		{
+			"parameters": {
+				"rule": {
+					"interval": [
+						{
+							"field": "weeks",
+							"triggerAtDay": [1],
+							"triggerAtHour": 8
+						}
+					]
+				}
+			},
+			"id": "2534e9ac-5530-4398-9622-88744b1a11a9",
+			"name": "Every Monday 8AM",
+			"type": "n8n-nodes-base.scheduleTrigger",
+			"typeVersion": 1.2,
+			"position": [-640, 240]
+		},
+		{
+			"parameters": {
+				"resource": "project",
+				"operation": "get",
+				"id": "={{ $json.projectId }}"
+			},
+			"id": "21e50202-405e-4038-8a6a-4d6db9ca548f",
+			"name": "Harvest: Get Project",
+			"type": "n8n-nodes-harvest.harvest",
+			"typeVersion": 1,
+			"position": [-144, 240]
+		},
+		{
+			"parameters": {
+				"content": "### 📊 Weekly Harvest Hours Report\n\nThis workflow sends a weekly email report showing:\n- Hours tracked last week\n- Monthly progress vs target\n- Total budget consumption\n- Recommended workload (days/week) to use remaining budget\n\n**Runs:** Every Monday at 8:00 AM\n\n**Requirements:**\n- Harvest API credentials\n- SMTP credentials for email\n- Project must have a budget set in Harvest\n\n\n**License:** MIT",
+				"height": 380,
+				"width": 384
+			},
+			"id": "cfb07d25-ad6f-44c8-81ee-2c633f4a7a7c",
+			"name": "Sticky Note",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [-896, -160]
+		},
+		{
+			"parameters": {
+				"content": "## ⚙️ Configuration\n\nEdit this node to configure:\n\n- **projectId**: Your Harvest project ID\n- **hoursPerWorkday**: Hours in a full workday (default: 8)\n- **workingDays**: Working days per month for your year\n- **totalWorkingDays**: Sum of all monthly working days\n- **emailTo/From**: Email addresses\n\n💡 The budget is automatically fetched from the Harvest project settings.",
+				"height": 840,
+				"width": 280
+			},
+			"id": "3e90de7d-3e9a-4396-8094-147f76f04c6b",
+			"name": "Sticky Note1",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [-496, -160]
+		},
+		{
+			"parameters": {
+				"content": "## 🌾 Harvest API Calls\n\n**Get Project:** Fetches project details including the budget (in hours).\n\n**Time Entries:** Three calls fetch time entries for:\n1. **Last Week** - Previous Mon-Sun\n2. **This Month** - Month to date\n3. **Year-to-Date** - From Jan 1\n\nAll filtered by project ID for efficiency.",
+				"height": 832,
+				"width": 524
+			},
+			"id": "a9f2184d-015d-4f81-9e4a-5057b16a67d5",
+			"name": "Sticky Note2",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [-192, -160]
+		},
+		{
+			"parameters": {
+				"content": "## 🧮 Calculations\n\nThe Code node calculates:\n\n- **Pace:** Are you on track to use the full budget?\n- **Monthly targets:** Based on working days per month\n- **Days/week needed:** How much should 1 person work to consume remaining budget\n\n**Pace Status:**\n- 🟢 On Track (95-105%)\n- 🟡 Behind Schedule (<95%)\n- 🟡 Ahead - Risk of Over Budget (>105%)\n- 🔴 Over Budget! (exceeded)",
+				"height": 828,
+				"width": 488
+			},
+			"id": "826b36b0-0b92-463d-9420-196f2699eca7",
+			"name": "Sticky Note3",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [352, -160]
+		},
+		{
+			"parameters": {
+				"content": "## 📧 Email Report\n\nSends a beautifully formatted HTML email with:\n\n- Status badge (pace indicator)\n- Last week's hours\n- Monthly progress with progress bar\n- Budget status with progress bar\n- Recommended workload box\n- Monthly breakdown\n\nCustomize the HTML template in this node.",
+				"height": 826,
+				"width": 340
+			},
+			"id": "e6fd72f4-cbf7-4ef6-93bd-9e70bbc4a8b5",
+			"name": "Sticky Note4",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [864, -160]
+		},
+		{
+			"parameters": {
+				"content": "## 🔧 Setup Instructions\n\n1. **Create Harvest API credentials** in n8n and update all Harvest nodes\n2. **Create SMTP credentials** for sending emails\n3. **Edit the Config node** with your project ID and working days\n4. **Ensure your Harvest project has a budget** set (in hours)\n5. **Test the workflow** manually before activating\n",
+				"height": 276,
+				"width": 382,
+				"color": 4
+			},
+			"id": "7f3e174a-9b2d-4910-ac11-2ce09f6468e2",
+			"name": "Sticky Note5",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [-896, 400]
+		}
+	],
+	"connections": {
+		"Config": {
+			"main": [
+				[
+					{
+						"node": "Harvest: Get Project",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Harvest: Last Week": {
+			"main": [
+				[
+					{
+						"node": "Wait for All Harvest Data",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Harvest: This Month": {
+			"main": [
+				[
+					{
+						"node": "Wait for All Harvest Data",
+						"type": "main",
+						"index": 1
+					}
+				]
+			]
+		},
+		"Harvest: Year-to-Date": {
+			"main": [
+				[
+					{
+						"node": "Wait for All Harvest Data",
+						"type": "main",
+						"index": 2
+					}
+				]
+			]
+		},
+		"Wait for All Harvest Data": {
+			"main": [
+				[
+					{
+						"node": "Calculate Budget Metrics",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Calculate Budget Metrics": {
+			"main": [
+				[
+					{
+						"node": "Send Weekly Report",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Every Monday 8AM": {
+			"main": [
+				[
+					{
+						"node": "Config",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Harvest: Get Project": {
+			"main": [
+				[
+					{
+						"node": "Harvest: Last Week",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "Harvest: This Month",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "Harvest: Year-to-Date",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		}
+	}
+}

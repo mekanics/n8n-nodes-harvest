@@ -8,6 +8,8 @@ A TypeScript monorepo containing a type-safe Harvest API client and n8n communit
 harvest-clients/
 ├── apps/
 │   └── n8n-nodes-harvest/     # n8n community node for Harvest
+├── examples/                  # Example workflows and integrations
+│   └── n8n-workflows/
 ├── packages/
 │   ├── harvest-client/        # Type-safe Harvest API client
 │   ├── eslint-config/         # Shared ESLint configuration
@@ -95,6 +97,24 @@ A type-safe TypeScript client for the Harvest API v2. See the [harvest-client RE
 
 An n8n community node for Harvest time tracking and invoicing. See the [n8n-nodes-harvest README](./apps/n8n-nodes-harvest/README.md) for installation and usage instructions.
 
+## Examples
+
+The [examples directory](./examples/) contains ready-to-use workflows and integrations:
+
+### Weekly Hours Report Workflow
+
+A comprehensive n8n workflow for automated project budget tracking:
+
+- **Runs weekly** on Mondays at 8:00 AM
+- **Reads project budget** directly from Harvest
+- **Tracks hours** across last week, month-to-date, and year-to-date
+- **Calculates workload** recommendations (days/week needed)
+- **Sends beautiful HTML reports** with progress bars
+
+**Location:** `examples/n8n-workflows/weekly-hours-report.json`
+
+See the [examples README](./examples/README.md) for setup instructions and more examples.
+
 ## API Documentation
 
 This project implements the [Harvest API v2](https://help.getharvest.com/api-v2/). The OpenAPI specification is located at `packages/harvest-client/src/openapi/harvest-v2.yaml`.
@@ -110,4 +130,3 @@ This project implements the [Harvest API v2](https://help.getharvest.com/api-v2/
 ## License
 
 MIT
-
