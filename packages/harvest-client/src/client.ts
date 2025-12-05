@@ -1,37 +1,37 @@
-import createClient, { type Middleware } from 'openapi-fetch';
-import type { paths } from './types/harvest.js';
+import createClient, { type Middleware } from 'openapi-fetch'
+import type { paths } from './types/harvest.js'
 
 /**
  * Fetch function type
  */
-type FetchFunction = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+type FetchFunction = typeof fetch
 
 /**
  * Configuration options for the Harvest API client
  */
 export interface HarvestClientOptions {
-  /** Harvest Account ID */
-  accountId: string;
-  /** Personal Access Token or OAuth2 access token */
-  accessToken: string;
-  /** Base URL for the Harvest API (defaults to https://api.harvestapp.com/v2) */
-  baseUrl?: string;
-  /** Custom fetch implementation (optional) */
-  fetch?: FetchFunction;
+	/** Harvest Account ID */
+	accountId: string
+	/** Personal Access Token or OAuth2 access token */
+	accessToken: string
+	/** Base URL for the Harvest API (defaults to https://api.harvestapp.com/v2) */
+	baseUrl?: string
+	/** Custom fetch implementation (optional) */
+	fetch?: FetchFunction
 }
 
 /**
  * Authentication middleware that adds required headers to all requests
  */
 function createAuthMiddleware(options: HarvestClientOptions): Middleware {
-  return {
-    async onRequest({ request }) {
-      request.headers.set('Authorization', `Bearer ${options.accessToken}`);
-      request.headers.set('Harvest-Account-Id', options.accountId);
-      request.headers.set('User-Agent', 'Harvest-Client/1.0.0');
-      return request;
-    },
-  };
+	return {
+		async onRequest({ request }) {
+			request.headers.set('Authorization', `Bearer ${options.accessToken}`)
+			request.headers.set('Harvest-Account-Id', options.accountId)
+			request.headers.set('User-Agent', 'Harvest-Client/1.0.0')
+			return request
+		},
+	}
 }
 
 /**
@@ -67,17 +67,17 @@ function createAuthMiddleware(options: HarvestClientOptions): Middleware {
  * ```
  */
 export function createHarvestClient(options: HarvestClientOptions) {
-  const client = createClient<paths>({
-    baseUrl: options.baseUrl ?? 'https://api.harvestapp.com/v2',
-    fetch: options.fetch,
-  });
+	const client = createClient<paths>({
+		baseUrl: options.baseUrl ?? 'https://api.harvestapp.com/v2',
+		fetch: options.fetch,
+	})
 
-  client.use(createAuthMiddleware(options));
+	client.use(createAuthMiddleware(options))
 
-  return client;
+	return client
 }
 
 /**
  * Type alias for the Harvest client instance
  */
-export type HarvestClient = ReturnType<typeof createHarvestClient>;
+export type HarvestClient = ReturnType<typeof createHarvestClient>
