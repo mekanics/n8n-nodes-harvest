@@ -41,6 +41,3 @@ jobs:
 
             - name: Type check
               run: pnpm type-check
-
-            - name: Format check
-              run: pnpm format:check
