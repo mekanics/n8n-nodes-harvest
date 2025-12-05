@@ -16,3 +16,5 @@ export const companyOperations: INodeProperties = {
 
 export const companyFields: INodeProperties[] = [];
 
+
+

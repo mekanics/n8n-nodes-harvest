@@ -1,0 +1,33 @@
+# Exclude source files (only include built dist/)
+src/
+*.ts
+!dist/**/*.d.ts
+
+# Exclude development files
+*.config.js
+*.config.ts
+tsconfig.json
+tsup.config.ts
+eslint.config.js
+
+# Exclude documentation and examples
+README.md
+examples/
+workflows/
+docs/
+
+# Exclude test files
+*.test.*
+*.spec.*
+
+# Exclude git and editor files
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# Exclude build artifacts except dist/
+build/
+coverage/
+*.log
+.DS_Store

@@ -6,7 +6,7 @@ An n8n community node for [Harvest](https://www.getharvest.com/) time tracking a
 
 ## Why This Node?
 
-This community node provides a **more comprehensive implementation** than n8n's built-in Harvest integration:
+This community node provides a **more complete implementation** than n8n's built-in Harvest integration:
 
 - **More Resources**: Includes Company, Expense Categories, Project Assignments, and comprehensive Reports
 - **Invoice PDF Downloads**: Download invoices as PDF files directly within your workflows
@@ -177,6 +177,33 @@ Access comprehensive reporting data with date range filtering:
 - **Project Budget**: Get project budget status and consumption
 
 ## Example Workflows
+
+### Weekly Hours Report Workflow
+
+A comprehensive automated workflow for tracking project budget consumption and sending weekly reports:
+
+**Features:**
+
+- Runs every Monday at 8:00 AM
+- Fetches project budget directly from Harvest
+- Tracks hours across last week, month-to-date, and year-to-date
+- Calculates recommended workload (days/week) to use full budget
+- Sends beautiful HTML email reports with progress bars
+
+**Setup:**
+
+1. Import `examples/n8n-workflows/weekly-hours-report.json`
+2. Configure your project ID in the Config node
+3. Set up Harvest and SMTP credentials
+4. Ensure your Harvest project has a budget configured
+
+**What it includes:**
+
+- **Budget from Harvest**: No hardcoding - reads budget directly from project settings
+- **Pace Indicators**: Shows if you're on track to use the full budget
+- **Workload Calculator**: Calculates how many days/week 1 person should work
+- **Visual Progress**: Progress bars and status badges in email
+- **Complete Documentation**: Sticky notes explain every step
 
 ### Daily Time Entry Report
 
