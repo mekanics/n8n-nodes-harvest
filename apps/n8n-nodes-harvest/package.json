@@ -1,56 +1,48 @@
 {
-  "name": "n8n-nodes-harvest",
-  "version": "1.0.0",
-  "description": "n8n community node for Harvest time tracking and invoicing",
-  "license": "MIT",
-  "homepage": "https://github.com/mekanics/harvest-clients",
-  "author": {
-    "name": "Mekanics"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/mekanics/harvest-clients.git"
-  },
-  "keywords": [
-    "n8n-community-node-package",
-    "n8n",
-    "harvest",
-    "time-tracking",
-    "invoicing"
-  ],
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
-  "n8n": {
-    "n8nNodesApiVersion": 1,
-    "credentials": [
-      "dist/credentials/HarvestApi.credentials.js"
-    ],
-    "nodes": [
-      "dist/nodes/Harvest/Harvest.node.js"
-    ]
-  },
-  "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "clean": "rm -rf dist",
-    "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix",
-    "type-check": "tsc --noEmit",
-    "prepublishOnly": "pnpm run build"
-  },
-  "dependencies": {},
-  "devDependencies": {
-    "eslint": "^9.16.0",
-    "eslint-config": "workspace:*",
-    "harvest-client": "workspace:*",
-    "tsup": "^8.3.5",
-    "typescript": "^5.7.2",
-    "typescript-config": "workspace:*"
-  },
-  "peerDependencies": {
-    "n8n-workflow": ">=1.0.0"
-  }
+	"name": "n8n-nodes-harvest",
+	"version": "0.0.1",
+	"description": "n8n community node for Harvest time tracking and invoicing",
+	"license": "MIT",
+	"homepage": "https://github.com/mekanics/harvest-clients",
+	"author": {
+		"name": "Mekanics"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/mekanics/harvest-clients.git"
+	},
+	"keywords": ["n8n-community-node-package", "n8n", "harvest", "time-tracking", "invoicing"],
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"files": ["dist"],
+	"publishConfig": {
+		"access": "public",
+		"provenance": true
+	},
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"credentials": ["dist/credentials/HarvestApi.credentials.js"],
+		"nodes": ["dist/nodes/Harvest/Harvest.node.js"]
+	},
+	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"clean": "rm -rf dist",
+		"lint": "eslint . --ext .ts",
+		"lint:fix": "eslint . --ext .ts --fix",
+		"type-check": "tsc --noEmit",
+		"prepublishOnly": "pnpm run build"
+	},
+	"dependencies": {},
+	"devDependencies": {
+		"eslint": "^9.16.0",
+		"eslint-config": "workspace:*",
+		"harvest-client": "workspace:*",
+		"tsup": "^8.3.5",
+		"typescript": "^5.7.2",
+		"typescript-config": "workspace:*"
+	},
+	"peerDependencies": {
+		"n8n-workflow": ">=1.0.0"
+	}
 }
