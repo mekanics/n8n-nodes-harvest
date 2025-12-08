@@ -130,3 +130,4 @@ This project implements the [Harvest API v2](https://help.getharvest.com/api-v2/
 ## License
 
 MIT
+
