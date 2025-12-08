@@ -7,5 +7,5 @@
 	"access": "public",
 	"baseBranch": "main",
 	"updateInternalDependencies": "patch",
-	"ignore": ["harvest-client", "eslint-config", "typescript-config"]
+	"packages": ["apps/n8n-nodes-harvest"]
 }
