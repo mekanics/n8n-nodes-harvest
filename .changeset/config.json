@@ -7,5 +7,5 @@
 	"access": "public",
 	"baseBranch": "main",
 	"updateInternalDependencies": "patch",
-	"ignore": ["harvest-clients", "harvest-client", "eslint-config", "typescript-config"]
+	"ignore": ["harvest-client", "eslint-config", "typescript-config"]
 }
