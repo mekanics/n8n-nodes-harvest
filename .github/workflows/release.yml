@@ -1,62 +1,74 @@
 name: Release
 
 on:
-    workflow_run:
-        workflows: ['CI']
-        types:
-            - completed
-        branches:
-            - main
+  workflow_run:
+    workflows: ['CI']
+    types:
+      - completed
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-    release:
-        name: Release
-        runs-on: ubuntu-latest
+  release:
+    name: Release
+    runs-on: ubuntu-latest
 
-        permissions:
-            contents: write
-            pull-requests: write
-            id-token: write
+    steps:
+      - name: Check CI workflow result
+        if: ${{ github.event.workflow_run.conclusion != 'success' }}
+        run: |
+          echo "CI workflow did not succeed. Conclusion was: ${{ github.event.workflow_run.conclusion }}"
+          exit 1
 
-        steps:
-            - name: Check CI workflow result
-              if: ${{ github.event.workflow_run.conclusion != 'success' }}
-              run: |
-                  echo "CI workflow did not succeed. Conclusion was: ${{ github.event.workflow_run.conclusion }}"
-                  exit 1
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-            - name: Checkout
-              uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
 
-            - name: Install pnpm
-              uses: pnpm/action-setup@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version-file: '.nvmrc'
-                  cache: 'pnpm'
-                  registry-url: 'https://registry.npmjs.org'
+      - name: Install latest npm for Trusted Publishing
+        run: npm install -g npm@latest
 
-            - name: Install latest npm for Trusted Publishing
-              run: npm install -g npm@latest
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-            - name: Install dependencies
-              run: pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
 
-            - name: Build
-              run: pnpm build
+      - name: Create Release Pull Request or Publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: pnpm version
+          publish: pnpm release
+          title: 'chore: version packages'
+          commit: 'chore: version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Create Release Pull Request or Publish
-              uses: changesets/action@v1
-              with:
-                  version: pnpm version
-                  publish: pnpm release
-                  title: 'chore: version packages'
-                  commit: 'chore: version packages'
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish to GitHub Packages
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" > .npmrc
+          echo "@${{ github.repository_owner }}:registry=https://npm.pkg.github.com" >> .npmrc
+          npm publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
