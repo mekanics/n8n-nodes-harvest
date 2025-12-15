@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-harvest",
-	"version": "0.0.1",
+	"version": "1.0.0",
 	"description": "n8n community node for Harvest time tracking and invoicing",
 	"license": "MIT",
 	"homepage": "https://github.com/mekanics/harvest-clients",
@@ -11,18 +11,30 @@
 		"type": "git",
 		"url": "https://github.com/mekanics/harvest-clients.git"
 	},
-	"keywords": ["n8n-community-node-package", "n8n", "harvest", "time-tracking", "invoicing"],
+	"keywords": [
+		"n8n-community-node-package",
+		"n8n",
+		"harvest",
+		"time-tracking",
+		"invoicing"
+	],
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
-	"files": ["dist"],
+	"files": [
+		"dist"
+	],
 	"publishConfig": {
 		"access": "public",
 		"provenance": true
 	},
 	"n8n": {
 		"n8nNodesApiVersion": 1,
-		"credentials": ["dist/credentials/HarvestApi.credentials.js"],
-		"nodes": ["dist/nodes/Harvest/Harvest.node.js"]
+		"credentials": [
+			"dist/credentials/HarvestApi.credentials.js"
+		],
+		"nodes": [
+			"dist/nodes/Harvest/Harvest.node.js"
+		]
 	},
 	"scripts": {
 		"build": "tsup",
@@ -46,4 +58,3 @@
 		"n8n-workflow": ">=1.0.0"
 	}
 }
-
