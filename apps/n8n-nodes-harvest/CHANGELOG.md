@@ -1,5 +1,11 @@
 # n8n-nodes-harvest
 
+## 1.0.1
+
+### Patch Changes
+
+- 5661e2b: Fix the package.json for provenance
+
 ## 1.0.0
 
 ### Major Changes
