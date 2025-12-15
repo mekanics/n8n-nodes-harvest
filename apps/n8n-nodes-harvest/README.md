@@ -240,18 +240,16 @@ A comprehensive automated workflow for tracking project budget consumption and s
 
 ## Development
 
-This node is part of the [harvest-clients](https://github.com/mekanics/harvest-clients) monorepo.
-
 ```bash
 # Clone the repository
-git clone https://github.com/mekanics/harvest-clients.git
-cd harvest-clients
+git clone https://github.com/mekanics/n8n-nodes-harvest.git
+cd n8n-nodes-harvest
 
 # Install dependencies
 pnpm install
 
 # Build the node
-pnpm --filter n8n-nodes-harvest build
+pnpm build
 ```
 
 ## Resources
