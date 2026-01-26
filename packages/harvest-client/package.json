@@ -27,7 +27,7 @@
 		"type-check": "tsc --noEmit"
 	},
 	"dependencies": {
-		"openapi-fetch": "^0.13.3"
+		"openapi-fetch": "^0.15.0"
 	},
 	"devDependencies": {
 		"eslint": "^9.16.0",
